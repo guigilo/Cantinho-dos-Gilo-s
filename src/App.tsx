@@ -203,6 +203,30 @@ export default function App() {
 }
 
 function LoginView() {
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const handleLogin = async () => {
+    try {
+      setIsLoggingIn(true);
+      setLoginError(null);
+      await loginWithGoogle();
+    } catch (error: any) {
+      console.error("Erro no login:", error);
+      if (error.code === 'auth/popup-blocked') {
+        setLoginError("O pop-up foi bloqueado pelo navegador. Verifique a barra de endereço.");
+      } else if (error.code === 'auth/operation-not-allowed') {
+        setLoginError("O login com Google não parece estar ativado no Firebase Console.");
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setLoginError("Este domínio não está autorizado no Firebase Console.");
+      } else {
+        setLoginError(`Erro: ${error.message || "Tente abrir em uma nova aba."}`);
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-bg-cream flex flex-col items-center justify-center p-6 text-center">
       <motion.div 
@@ -221,12 +245,27 @@ function LoginView() {
             Gerencie sua produção, estoque e cardápio de forma artesanal e profissional.
           </p>
         </div>
+
+        {loginError && (
+          <div className="p-4 bg-red-50 border-2 border-red-200 text-red-600 text-[10px] font-bold uppercase leading-tight space-y-2">
+            <p>{loginError}</p>
+            <p className="border-t border-red-200 pt-2 opacity-70">Dica: Tente usar o botão "Abrir em nova aba" no topo do editor.</p>
+          </div>
+        )}
+
         <button 
-          onClick={loginWithGoogle}
-          className="w-full flex items-center justify-center gap-3 bg-primary-pink text-primary-brown border-2 border-primary-brown py-4 font-bold uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(127,85,57,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+          onClick={handleLogin}
+          disabled={isLoggingIn}
+          className={`w-full flex items-center justify-center gap-3 bg-primary-pink text-primary-brown border-2 border-primary-brown py-4 font-bold uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(127,85,57,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all ${isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <LogIn size={20} />
-          Entrar com Google
+          {isLoggingIn ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+              <LogIn size={20} />
+            </motion.div>
+          ) : (
+            <LogIn size={20} />
+          )}
+          {isLoggingIn ? 'Entrando...' : 'Entrar com Google'}
         </button>
         <p className="text-[10px] text-primary-brown/40 uppercase tracking-[0.2em] font-bold">Artesanal & Profissional</p>
       </motion.div>
