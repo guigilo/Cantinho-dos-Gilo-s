@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "title": "Inventory Item",
+      "description": "Items in stock for recipes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "brand": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string", "enum": ["un", "g", "ml"] },
+        "pricePaid": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["name", "quantity", "unit", "pricePaid", "userId"]
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "Production recipes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inventoryItemId": { "type": "string" },
+              "amount": { "type": "number" }
+            }
+          }
+        },
+        "yield": { "type": "string" },
+        "observations": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["name", "userId"]
+    },
+    "MenuItem": {
+      "title": "Menu Item",
+      "description": "Products offered in the store",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "color": { "type": "string" }
+            }
+          }
+        },
+        "userId": { "type": "string" }
+      },
+      "required": ["name", "price", "userId"]
+    }
+  },
+  "firestore": {
+    "/inventory": {
+      "schema": "InventoryItem",
+      "description": "Global inventory items, filtered by userId"
+    },
+    "/recipes": {
+      "schema": "Recipe",
+      "description": "Global recipes, filtered by userId"
+    },
+    "/menu": {
+      "schema": "MenuItem",
+      "description": "Global menu items, filtered by userId"
+    }
+  }
+}

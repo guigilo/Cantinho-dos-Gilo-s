@@ -1,0 +1,6 @@
+{
+  "name": "Cantinho dos Gilo's",
+  "description": "Sistema completo para gestão de confeitaria: cardápio, estoque, receitas e guia de montagem.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
