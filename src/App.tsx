@@ -16,9 +16,7 @@ import {
   Save, 
   X,
   ChevronDown,
-  ChevronUp,
-  LogOut,
-  LogIn
+  ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -32,8 +30,6 @@ import {
 import { 
   auth, 
   db, 
-  loginWithGoogle, 
-  logout, 
   OperationType, 
   handleFirestoreError 
 } from './lib/firebase';
@@ -50,21 +46,13 @@ import {
 } from 'firebase/firestore';
 
 export default function App() {
-  const [user, setUser] = useState(auth.currentUser);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({ uid: 'public_owner', displayName: 'Confeiteiro' });
+  const [loading, setLoading] = useState(false);
   const [view, setView] = useState<ViewType>('dashboard');
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   
-  // Auth state listener
-  useEffect(() => {
-    return auth.onAuthStateChanged((u) => {
-      setUser(u);
-      setLoading(false);
-    });
-  }, []);
-
   // Firebase Data Listeners
   useEffect(() => {
     if (!user) return;
@@ -96,22 +84,6 @@ export default function App() {
 
   // Navigation
   const navigate = (newView: ViewType) => setView(newView);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg-cream">
-        <motion.div 
-          animate={{ rotate: 360 }} 
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-10 h-10 border-4 border-primary-pink border-t-primary-brown rounded-full"
-        />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginView />;
-  }
 
   return (
     <div className="min-h-screen bg-bg-cream text-primary-brown font-sans selection:bg-primary-pink/20 pb-10">
@@ -151,13 +123,11 @@ export default function App() {
             <p className="text-[10px] font-bold uppercase tracking-wider text-primary-brown/40">Usuário</p>
             <p className="text-[11px] font-medium">{user.displayName || 'Confeiteiro'}</p>
           </div>
-          <button 
-            onClick={logout}
-            className="w-10 h-10 border-2 border-primary-brown flex items-center justify-center text-primary-brown hover:bg-primary-brown hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(127,85,57,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none bg-white font-serif italic text-xl"
-            title="Sair"
+          <div 
+            className="w-10 h-10 border-2 border-primary-brown flex items-center justify-center text-primary-brown bg-white font-serif italic text-xl shadow-[2px_2px_0px_0px_rgba(127,85,57,1)]"
           >
-            <LogOut size={18} />
-          </button>
+            C
+          </div>
         </div>
       </header>
 
@@ -198,77 +168,6 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
-    </div>
-  );
-}
-
-function LoginView() {
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  const handleLogin = async () => {
-    try {
-      setIsLoggingIn(true);
-      setLoginError(null);
-      await loginWithGoogle();
-    } catch (error: any) {
-      console.error("Erro no login:", error);
-      if (error.code === 'auth/popup-blocked') {
-        setLoginError("O pop-up foi bloqueado pelo navegador. Verifique a barra de endereço.");
-      } else if (error.code === 'auth/operation-not-allowed') {
-        setLoginError("O login com Google não parece estar ativado no Firebase Console.");
-      } else if (error.code === 'auth/unauthorized-domain') {
-        setLoginError("Este domínio não está autorizado no Firebase Console.");
-      } else {
-        setLoginError(`Erro: ${error.message || "Tente abrir em uma nova aba."}`);
-      }
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-bg-cream flex flex-col items-center justify-center p-6 text-center">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-sm p-10 bg-white border-4 border-primary-brown shadow-[8px_8px_0px_0px_rgba(127,85,57,1)] flex flex-col items-center gap-8"
-      >
-        <img 
-          src="https://raw.githubusercontent.com/guilhermekamper/confeitaria-assets/main/logo.png" 
-          alt="Cantinho dos Gilo's" 
-          className="w-40 h-40 object-contain"
-        />
-        <div className="space-y-4">
-          <h1 className="text-3xl font-serif italic text-primary-brown">Seja Bem-vindo!</h1>
-          <p className="text-sm font-medium text-primary-brown/60 leading-relaxed px-4">
-            Gerencie sua produção, estoque e cardápio de forma artesanal e profissional.
-          </p>
-        </div>
-
-        {loginError && (
-          <div className="p-4 bg-red-50 border-2 border-red-200 text-red-600 text-[10px] font-bold uppercase leading-tight space-y-2">
-            <p>{loginError}</p>
-            <p className="border-t border-red-200 pt-2 opacity-70">Dica: Tente usar o botão "Abrir em nova aba" no topo do editor.</p>
-          </div>
-        )}
-
-        <button 
-          onClick={handleLogin}
-          disabled={isLoggingIn}
-          className={`w-full flex items-center justify-center gap-3 bg-primary-pink text-primary-brown border-2 border-primary-brown py-4 font-bold uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(127,85,57,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all ${isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          {isLoggingIn ? (
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
-              <LogIn size={20} />
-            </motion.div>
-          ) : (
-            <LogIn size={20} />
-          )}
-          {isLoggingIn ? 'Entrando...' : 'Entrar com Google'}
-        </button>
-        <p className="text-[10px] text-primary-brown/40 uppercase tracking-[0.2em] font-bold">Artesanal & Profissional</p>
-      </motion.div>
     </div>
   );
 }
